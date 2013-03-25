@@ -1,0 +1,201 @@
+Page
+==============
+
+<apex:page controller="yahooController">
+<script>
+
+function click(var link) {
+alert(link);
+}
+
+</script>
+   <h1>Yahoo Messenger</h1>
+   <br/>
+<apex:form >
+    <p>Enter User Name
+    <apex:inputText value="{!userName}"/></p> 
+    <p>Enter Password 
+    <apex:inputSecret value="{!password}"/></p>
+  <!--  <p>Token</p>
+    <apex:outputText value="{!RequestToken}"/>
+    <p>oAuthToken</p>
+    <apex:outputText value="{!oAuthToken}"/>
+    <p>Session</p> 
+    <apex:outputText value="{!sessionId}"/> -->
+    <p>Contactlist</p>
+   <!-- <apex:outputText value="{!Contacts}"/> -->
+    <apex:dataList value="{!names}" var="r1" id="ns">
+        <apex:outputText value="{!r1}"/>
+    </apex:dataList>
+<br/>
+    <apex:commandButton action="{!login}" value="Login"/>
+    <br/>
+    <p>Enter Id to send the message to :</p>
+    <apex:inputText value="{!yahooId}"/>
+    <p>Enter message to send:</p>
+    <apex:inputText value="{!message}"/>
+    <apex:commandButton action="{!sendmessage}" value="Send"/>
+   <p>Resposes: <!-- <apex:outputText value="{!response}" id="res"/> -->
+</p>
+
+<apex:dataList value="{!res1}" var="r" id="s">
+        <apex:outputText value="{!r}"/>
+    </apex:dataList>
+
+   <br/>
+   <apex:actionPoller action="{!poll}" rerender="s" interval="5"/> 
+  <!-- <apex:commandButton action="{!poll}" value="Check"/> -->
+   </apex:form>
+</apex:page>
+
+Controller
+======================
+
+Public class yahooController{
+
+Public string userName{get;set;}
+public string password{get;set;}
+public string RequestToken{get;set;}
+Public static final string consumerKey = 'dj0yJmk9TXRyaHJ0T1RnclRqJmQ9WVdrOVNXTmFkbmRuTm1jbWNHbzlNVFUxTlRVNU1ERTJNZy0tJnM9Y29uc3VtZXJzZWNyZXQmeD04Nw--';
+Public static final string secret ='ede2faef4f33aef01e2e8a6fffc2601b2ef8ef4d%26';
+Public string secret1;
+Public static final string secret2 ='ede2faef4f33aef01e2e8a6fffc2601b2ef8ef4d&';
+Public static final string realm = 'yahooapis.com';
+public string oAuthToken{get;set;}
+public string sessionId{get;set;}
+public string serverUrl{get;set;}
+Public string Auth;
+Public string Contacts{get;set;}
+Public string yahooId{get;set;}
+Public string message{get;set;}
+Public string response{get;set;}
+Public List<String> res1{get;set;}
+Public Integer seq;
+Public List<String> names{get;set;}
+
+Public void login(){
+//get the Request Token
+string endpoint;
+endpoint = 'https://login.yahoo.com/WSLogin/V1/get_auth_token?&login=' + userName+ '&passwd=' + password + '&oauth_consumer_key=' + consumerKey;
+yahooHttpUtils y = new yahooHttpUtils();
+RequestToken = y.getRequestcall(endpoint).removeStart('RequestToken=');
+
+//get the oAuth token
+
+string endpoint1 = 'https://api.login.yahoo.com/oauth/v2/get_token?'+'&oauth_consumer_key='+ consumerKey+'&oauth_signature_method=PLAINTEXT&oauth_nonce=214354&oauth_timestamp='+ time() +'&oauth_signature='+secret+'&oauth_version=1.0&oauth_token='+RequestToken;
+string header1='content-type';
+String headerV='application/x-www-form-urlencoded';
+    
+String a = y.getRequestcall(endpoint1,header1,headerV);
+
+//Parse the response to get the oAuth token and secret
+            Integer i = a.indexof('&oauth_token_secret');   
+            oAuthToken= a.substring(12,i);
+            Integer j = i+20; 
+            Integer q= a.indexof('&oauth_expires_in');      
+            secret1=a.substring(j,q);
+
+//Get the session
+
+string sessEndpoint = 'http://developer.messenger.yahooapis.com/v1/session';
+Auth= 'OAuth ' + 'realm="' + realm + '",oauth_consumer_key="'+consumerKey+'",oauth_nonce="214.354",oauth_signature_method="PLAINTEXT",oauth_timestamp="'+ time()+'",oauth_token="'+oAuthToken+'",oauth_version="1.0"'+',oauth_signature="'+secret2+secret1+'"'; 
+String contentType ='application/json; charset=utf-8';
+String body = '{}';
+String sessRes = y.postRequest(sessEndpoint,contentType,Auth,body);
+JSONParser parser = JSON.createParser(sessRes);
+
+                While(parser.getCurrentName() != 'sessionId'){
+                        parser.nextToken();
+                        parser.nextValue();
+                  }
+sessionId = parser.getText();
+
+                While(parser.getCurrentName() != 'server'){
+                        parser.nextToken();
+                        parser.nextValue();
+                  }
+                  
+serverUrl = parser.getText(); 
+getContacts();
+seq=0;
+}
+
+
+public void getContacts() {
+res1 = new list<string>();
+String ep = 'http://' + serverUrl +'/v1/contacts?sid=' + sessionId;
+string header1 = 'Authorization';
+yahooHttpUtils y = new yahooHttpUtils();
+Contacts = y.getRequestCall(ep,header1,Auth);
+
+names = new list<String>();
+JSONParser parser = JSON.createParser(Contacts);
+
+    While(parser.getCurrentName() != 'start') {
+
+            If( parser.getCurrentName() == 'id')
+                {
+                    names.add(parser.getText());
+                }
+                parser.nextToken();
+                parser.nextValue();
+
+            }
+
+}
+
+public Long time(){
+
+datetime myDate = datetime.now();
+Long timeNow = (mydate.getTime())/1000 ;
+return timeNow;
+
+}
+
+Public void sendmessage(){
+//String yahooId = 'arustagi_sfdc';
+String contentType='application/json;charset=utf-8';
+String b = '{"message":"'+ message +'"}';
+String ep = 'http://' + serverUrl +'/v1/message/yahoo/'+ yahooid +'?sid=' + sessionId;
+yahooHttpUtils y = new yahooHttpUtils();
+y.postRequest(ep,contentType,Auth,b);
+res1.add('You >>>: ' + message);
+
+}
+
+Public void poll(){
+
+If(sessionID != null)
+{
+String ep = 'http://' + serverUrl +'/v1/notifications?sid=' + sessionId +'&seq='+seq;
+string header1 = 'Authorization';
+yahooHttpUtils y = new yahooHttpUtils();
+string a = y.getRequestCall(ep,header1,Auth);
+system.debug('>>>>>>>>>>>>>>>>' + a + Auth);
+String temp;
+if(a.contains('msg'))
+{
+JSONParser parser = JSON.createParser(a);
+While(parser.getCurrentName() != 'sender'){
+        parser.nextToken();
+        parser.nextValue();
+}
+
+response = response + '\n' + parser.getText();
+temp= parser.getText();
+While(parser.getCurrentName() != 'msg'){
+        parser.nextToken();
+        parser.nextValue();
+}
+
+response = response + ':' + parser.getText() + '\n';
+res1.add(temp + ':' + parser.getText());
+
+}
+If (a.length()>90)
+{
+seq ++;
+}
+}
+}
+}
