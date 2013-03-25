@@ -1,4 +1,4 @@
-code
+Page code
 ====
 
 <apex:page showHeader="false" docType="html-5.0" standardStylesheets="false" cache="true" controller="jqmcontroller">
@@ -110,3 +110,30 @@ document.getElementById('result').value = '';
 </body>
 </html>
 </apex:page>
+
+Controller
+====
+
+public class jqmcontroller {
+
+public static List<string> aa;
+public static string s;
+
+@RemoteAction
+    public static Integer getAdd(Integer a, Integer b, Integer c) {
+    s='Value 1'+ a + '<br> Value 2' + b;  
+        if (c==0){
+    s = s + 'result :' + (a+b); 
+       return a + b;}
+    else if (c==1){
+       return a-b;}
+    else if(c==2){
+       return a*b;}
+    else if(c==3){
+       return a/b;}
+    return 0;
+    }
+      
+
+
+}
