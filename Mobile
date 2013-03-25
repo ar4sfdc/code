@@ -1,0 +1,112 @@
+code
+====
+
+<apex:page showHeader="false" docType="html-5.0" standardStylesheets="false" cache="true" controller="jqmcontroller">
+<html>
+<head>
+<title>Mobile</title>
+
+<link rel="stylesheet" href="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.mobile-1.0.1.min.css')}" />
+<apex:includeScript value="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.mobile-1.0.1.min.js')}"/>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<script>
+
+function multiply(a,b)
+{
+return a*b;
+}
+
+function getNumbers()
+{
+    var a= document.getElementById('value1').value;
+    var b= document.getElementById('value2').value;
+    var c = multiply(a,b);
+    document.getElementById('result').value = c;
+   $.mobile.changePage('#page2');
+ //alert(c);
+ 
+}
+
+function add() {
+        var a= document.getElementById('value1').value;
+        var b= document.getElementById('value2').value;
+        var c= document.getElementById('operation').value;
+        
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.jqmcontroller.getAdd}',
+            a,b,c, 
+            function(result, event){
+                if (event.status) {
+                    // Get DOM IDs for HTML and Visualforce elements like this
+                    document.getElementById('result').value = result;
+                    $.mobile.changePage('#page2');
+                } else if (event.type === 'exception') {
+                    document.getElementById("responseErrors").innerHTML = 
+                        event.message + "<br/>\n<pre>" + event.where + "</pre>";
+                } else {
+                    document.getElementById("responseErrors").innerHTML = event.message;
+                }
+            }, 
+            {escape: true}
+        );
+        }
+
+function Reset(){
+document.getElementById('value1').value='';
+document.getElementById('value2').value='';
+document.getElementById('result').value = '';
+}
+</script>
+<body>
+
+<div data-role="page" data-theme="b" id="mainpage">
+            
+        <div data-role="header">
+            <h1>Super</h1>
+        </div>
+        <div data-role="content">
+            <div data-role="fieldcontain">
+                        <label for="value1">Enter Value 1</label>
+                        <input id="value1" name="value1" type="number" placeholder="Enter First Number"></input>
+                        
+                        <label for="value2">Enter Value 2</label>
+                        <input id="value2" name="value2" type="number" placeholder="Enter Second Number" ></input>
+                    
+           <label for="operation" data-theme="b">Operation</label>
+                <select id="operation" name="operation" >
+                <option value="none">--None--</option>
+                <option value="0">Add</option>
+                <option value="1">Subtract</option>
+                <option value="2">Multiply</option>
+                <option value="3">Divide</option>
+                </select>
+                    
+                    <p>
+                        <button id="go"  data-icon="plus" data-theme="a" onClick="add()" >Go</button>
+                        <button id="remove"  data-icon="minus" data-theme="a" onClick="Reset()" >Reset</button>
+                    </p>
+                        
+            </div>
+        </div>
+</div>
+
+<div data-role="page" data-theme="b" id="page2">
+            
+        <div data-role="header">
+        <a href='#mainpage' id="back" class='ui-btn-left' data-icon='arrow-l' >Back</a>
+            <h1>Result</h1>
+        </div>
+        <div data-role="content">
+            <div data-role="fieldcontain">
+                        <label for="result">Result :</label>
+                        <input id="result" name="result" type="text"></input>       
+            </div>
+        </div>
+</div>
+</body>
+</html>
+</apex:page>
