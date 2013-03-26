@@ -3,17 +3,16 @@ Page
 
 <apex:page controller="yahooController">
 <script>
-
-function click(var link) {
-alert(link);
+function clickss(link) {
+document.getElementById('j_id0:j_id2:sendTo').value=link;
 }
-
 </script>
+
    <h1>Yahoo Messenger</h1>
    <br/>
 <apex:form >
     <p>Enter User Name
-    <apex:inputText value="{!userName}"/></p> 
+    <apex:inputText value="{!userName}" /></p> 
     <p>Enter Password 
     <apex:inputSecret value="{!password}"/></p>
   <!--  <p>Token</p>
@@ -25,13 +24,15 @@ alert(link);
     <p>Contactlist</p>
    <!-- <apex:outputText value="{!Contacts}"/> -->
     <apex:dataList value="{!names}" var="r1" id="ns">
-        <apex:outputText value="{!r1}"/>
+      <!--  <apex:outputText value="{!r1}"/> -->
+     <a href="#" onclick="clickss('{!r1}');">{!r1}</a>
     </apex:dataList>
 <br/>
     <apex:commandButton action="{!login}" value="Login"/>
+    <apex:commandButton action="{!logout}" value="Logout"/>
     <br/>
     <p>Enter Id to send the message to :</p>
-    <apex:inputText value="{!yahooId}"/>
+    <apex:inputText value="{!yahooId}" id="sendTo"/>
     <p>Enter message to send:</p>
     <apex:inputText value="{!message}"/>
     <apex:commandButton action="{!sendmessage}" value="Send"/>
@@ -44,7 +45,7 @@ alert(link);
 
    <br/>
    <apex:actionPoller action="{!poll}" rerender="s" interval="5"/> 
-  <!-- <apex:commandButton action="{!poll}" value="Check"/> -->
+  
    </apex:form>
 </apex:page>
 
@@ -70,6 +71,7 @@ Public string yahooId{get;set;}
 Public string message{get;set;}
 Public string response{get;set;}
 Public List<String> res1{get;set;}
+Public List<String> res2{get;set;}
 Public Integer seq;
 Public List<String> names{get;set;}
 
@@ -123,6 +125,7 @@ seq=0;
 
 public void getContacts() {
 res1 = new list<string>();
+res2 = new list<string>();
 String ep = 'http://' + serverUrl +'/v1/contacts?sid=' + sessionId;
 string header1 = 'Authorization';
 yahooHttpUtils y = new yahooHttpUtils();
@@ -153,13 +156,12 @@ return timeNow;
 }
 
 Public void sendmessage(){
-//String yahooId = 'arustagi_sfdc';
 String contentType='application/json;charset=utf-8';
 String b = '{"message":"'+ message +'"}';
 String ep = 'http://' + serverUrl +'/v1/message/yahoo/'+ yahooid +'?sid=' + sessionId;
 yahooHttpUtils y = new yahooHttpUtils();
 y.postRequest(ep,contentType,Auth,b);
-res1.add('You >>>: ' + message);
+res2.add('You >>>: ' + message);
 
 }
 
@@ -198,4 +200,13 @@ seq ++;
 }
 }
 }
+
+public void logout()
+{
+String ep = 'http://' + serverUrl +'/v1/session?sid=' + sessionId;
+yahooHttpUtils y = new yahooHttpUtils();
+String m = y.logout(ep,Auth);
+
+}
+
 }
