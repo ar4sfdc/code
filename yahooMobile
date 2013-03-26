@@ -1,0 +1,106 @@
+Page
+---------------------
+
+<apex:page showHeader="false" docType="html-5.0" standardStylesheets="false" cache="true" controller="yahooController">
+<html>
+<head>
+<title>Yahoo Messenger</title>
+
+<link rel="stylesheet" href="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.mobile-1.0.1.min.css')}" />
+<apex:includeScript value="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.cloudtunes_jQuery, 'jquery.mobile-1.0.1.min.js')}"/>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<script>
+
+
+  
+  $(document).ready(function(){
+//  $.mobile.hashListeningEnabled = false;
+//    $.mobile.linkBindingEnabled = false;
+      $.mobile.ajaxEnabled = false;
+   //  $.mobile.changePage('#page2');
+     // alert('test');
+  });
+
+function clickss(link) {
+document.getElementById('j_id0:j_id5:sendTo').value=link;
+$.mobile.changePage('#page2');
+ //alert(c);
+}
+
+function Reset(){
+document.getElementById('un').value='';
+document.getElementById('pw').value='';
+document.getElementById('result').value = '';
+}
+
+function Send1(){
+   send();
+   $.mobile.changePage('#page2');
+   }
+</script>
+<body>
+<apex:form >
+<apex:actionFunction name="Login1" action="{!login}"/>
+<apex:actionFunction name="Logout" action="{!logout}"/>
+<apex:actionFunction name="send" action="{!sendmessage}"/>
+<div data-role="page" data-theme="b" id="mainpage">
+            
+        <div data-role="header">
+            <h1>YAHOO!</h1>
+        </div>
+        <div data-role="content">
+            <div data-role="fieldcontain">           
+                       <label for="un">Enter User Name</label>
+                       <apex:inputText value="{!userName}" id="un"/>
+                       <br/>
+                    <label for="pw">Enter Password</label>
+                    <apex:inputSecret value="{!password}" id="pw"/>
+    
+    
+                    <p>
+                        <button id="Login"  data-icon="plus" data-theme="a" onClick="Login1()" >Login</button>
+                        <button id="remove"  data-icon="minus" data-theme="a" onClick="Logout()" >Logout</button>
+                    </p>
+                     
+                     CLICK ON CONTACT TO START CHAT!
+                        <apex:dataList value="{!names}" var="r1" id="ns">
+  
+     <a href="#" onclick="clickss('{!r1}');">{!r1}</a>
+    </apex:dataList>
+            </div>
+        </div>
+</div>
+
+<div data-role="page" data-theme="b" id="page2">
+            
+        <div data-role="header">
+        <a href='#mainpage' id="back" class='ui-btn-left' data-icon='arrow-l' >Back</a>
+            <h1>Contacts</h1>
+        </div>
+        <div data-role="content">
+            <div data-role="fieldcontain">
+                        <label for="sendTo">Enter yahoo Id</label>
+                        <apex:inputText value="{!yahooId}" id="sendTo"/>
+                        <p>Enter message to send:</p>
+                    <apex:inputText value="{!message}">
+                    <apex:actionSupport event="onchange" action="{!sendmessage}" />
+                    </apex:inputText>
+                  <button id="Send"  data-icon="plus" data-theme="a" onClick="Send1()" >Send</button>   
+    
+        <apex:dataList value="{!res1}" var="r" id="s">
+        <apex:outputText value="{!r}"/>
+        </apex:dataList>
+        <apex:actionPoller action="{!poll}" rerender="s" interval="5"/> 
+
+            </div>
+        </div>
+</div>
+</apex:form>
+</body>
+
+</html>
+</apex:page>
