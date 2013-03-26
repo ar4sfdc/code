@@ -1,0 +1,147 @@
+Page
+-------------------
+
+<apex:page controller="sfdc_test">
+    <apex:form >
+        <script>
+            function StateChange(value){            
+              StateData(value);             
+            }
+        </script>
+        <apex:pageBlock >
+            <apex:actionFunction action="{!ShowStateaction}" name="StateData" reRender="staterefresh">
+                <apex:param name="Statevalue"  value="" assignTo="{!PayeeCountry}" />
+            </apex:actionFunction>
+        <apex:Messages />  
+            <apex:pageBlockSection columns="1" title="SFDC Test" collapsible="false" >
+                <apex:repeat value="{!availableAttendeeFields}" var="field">
+                    
+                    <apex:pageBlockSectionItem rendered="{!IF(field.visible==true && field.Field!='MailingCountry' && field.Field!='MailingState',true,false)}">
+                        <apex:outputPanel >
+                            <apex:OutputText value="{!field.Label}" />
+                            <apex:outputtext value="{!IF(field.req==true,'<span class=req>*</span>','')}"  escape="false"></apex:outputText>
+                       </apex:outputPanel>
+                       
+                       <apex:outputPanel >
+                           <div style="margin-left:38px">
+                                <apex:inputField value="{!acc[field.Field]}"    style="width:{!if(field.Label=="Title",'45px;','')}"  />
+                            </div>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem rendered="{!IF(field.visible==true && field.Field=='MailingCountry',true,false)}">  
+                        <apex:OutputText value="{!Field.Label}{!IF(field.req==true,'<span class=req>*</span>','')}"  escape="false"  style="width:500px"/>
+                            <apex:selectlist value="{!acc[field.Field]}" size="1" style="width:200px;margin-left:40px" styleClass="{!IF(field.req==true,field.Field&' required' ,field.Field)}" onchange="StateChange(this.value);">
+                                <apex:selectOptions value="{!showcountries}"  rendered="{!IF(showcountries.size>0,true,false)}"/>             
+                            </apex:selectlist>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem rendered="{!IF(field.visible==true && field.Field=='MailingState' ,true,false)}">            
+                        <apex:OutputText value="{!Field.Label}{!IF(field.req==true,'<span class=req>*</span>','')}"  escape="false"/>
+                            <apex:outputPanel id="staterefresh">
+                                <apex:selectlist value="{!acc[field.Field]}" size="1" rendered="{!IF(showStates.size>0,true,false)}" style="width:200px;margin-left:40px" styleClass="{!IF(field.req==true,field.Field&' required' ,field.Field)}">
+                                    <apex:selectOptions value="{!showStates}"  />
+                                </apex:selectlist>
+                            </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:repeat>
+                    <apex:pageBlockSectionItem >
+                        <apex:commandButton value="Save" action="{!AttendeeForm}" />
+                    </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
+
+Controller
+----------------------
+
+public class sfdc_test {
+public Contact acc;
+public void setacc(contact acc){this.acc=acc;}
+    
+    public PageReference AttendeeForm() {
+        return null;
+    }
+
+    public Contact getacc(){
+        //acc.MailingCountry='840';
+        return acc;
+    }
+  
+public  List<AttendeeFieldsClass> getavailableAttendeeFields() {
+    acc=new contact();
+    
+    list<AttendeeFieldsClass> AttendeeContactFields =new list<AttendeeFieldsClass>();
+    AttendeeContactFields.clear();
+    
+    string LevelName ='a089000000FNUx7';
+    
+    list<Contact_information_fields__c> TempAttendeeList=[select Id,Name,Default_value__c,Field_type__c,Field_name__c,Order_number__c,Visible__c,Required__c from Contact_information_fields__c where Registration_level__c=:LevelName and  Event_name__c=null Order by Order_number__c];
+    
+    for(Contact_information_fields__c temp: TempAttendeeList){
+        AttendeeFieldsClass newrec=new AttendeeFieldsClass();
+            newrec.Label=temp.Name;
+            newrec.Field=temp.Field_name__c;
+            newrec.FieldType=temp.Field_type__c;
+            newrec.DefaultValue=temp.Default_value__c;
+            newrec.req=temp.Required__c;
+            newrec.visible=temp.Visible__c;
+            AttendeeContactFields.add(newrec);
+    }
+    return new List<AttendeeFieldsClass>(AttendeeContactFields);
+}
+
+    public class AttendeeFieldsClass {
+          public string Sectionname {get;set;}
+          public string Label {get;set;}
+          public string Field {get;set;}
+          public string DefaultValue{get;set;}
+          public string FieldType {get;set;}
+          public boolean req{get;set;}
+          public boolean visible{get;set;}  
+    }
+
+    public map<string,string> countrycodes = new map<string,string>();    
+    
+    public list<SelectOption> getshowcountries(){
+        List<SelectOption> options = new List<SelectOption>(); 
+        list<CnP_PaaS__CnP_Countries__c> countriesdata = [select CnP_PaaS__CnP_Country_Name__c,CnP_PaaS__Country_Abbrev__c,CnP_PaaS__Country_Code__c from CnP_PaaS__CnP_Countries__c order by CnP_PaaS__CnP_Country_Name__c limit 255];
+        
+        if(!countriesdata.isEmpty()){
+            for(CnP_PaaS__CnP_Countries__c count:countriesdata){
+                options.add(new SelectOption(count.CnP_PaaS__Country_Code__c,count.CnP_PaaS__CnP_Country_Name__c));
+                countrycodes.put(count.CnP_PaaS__Country_Abbrev__c,count.CnP_PaaS__Country_Code__c);
+            }
+        }
+        return options; 
+    }
+    
+    public pagereference ShowStateaction(){
+        getshowstates();
+        return null;
+    }
+    
+    public  map<string,string> statescode = new map<string,string>();
+    public boolean statestatus{get;set;}
+    
+    public list<SelectOPtion> getshowstates(){
+       if(ApexPages.currentPage().getParameters().get('Statevalue')!=null){
+            Acc.MailingCountry= ApexPages.currentPage().getParameters().get('Statevalue');
+       }
+        list<selectoption> options = new list<selectoption>();
+       system.debug('check payee country12' +  Acc.MailingCountry);
+        
+        list<CnP_PaaS__CnP_Country_State__c> statesdata= [select CnP_PaaS__State_Abbrev__c,CnP_PaaS__State_Name__c from CnP_PaaS__CnP_Country_State__c where CnP_PaaS__Country_Code__c=:Acc.MailingCountry order by CnP_PaaS__State_Name__c limit 100];
+        
+        if(!statesdata.isEmpty()){
+            for(CnP_PaaS__CnP_Country_State__c stat:statesdata){
+                     options.add(new selectOption(stat.CnP_PaaS__State_Name__c,stat.CnP_PaaS__State_Name__c));
+                     statescode.put(stat.CnP_PaaS__State_Abbrev__c,stat.CnP_PaaS__State_Name__c);
+         
+            }
+          statestatus = true;
+        }
+        return options; 
+}
+}
