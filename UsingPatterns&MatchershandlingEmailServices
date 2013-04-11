@@ -1,0 +1,16 @@
+global class eml_parseEmlAdds implements Messaging.InboundEmailHandler {
+
+    global Messaging.InboundEmailResult handleInboundEmail(Messaging.InboundEmail email, Messaging.InboundEnvelope envelope) {
+        Messaging.InboundEmailResult result = new Messaging.InboundEmailresult();
+        
+        String emailAddressRegex = '[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?';
+        String searchString = email.htmlBody.mid(0,33000);
+        Set<String> emlSet = new Set<String>();
+        Pattern p = Pattern.compile(emailAddressRegex);
+        Matcher m = p.matcher(searchString);
+        while (m.find()) {
+                emlSet.add(m.group());
+            }
+        return result;
+    }
+}
